@@ -1,10 +1,10 @@
-@rem prepare
-    @echo off
+@echo off
+
+@rem
     echo Checking that dir 'bin' exists...
     if not exist "bin" mkdir "bin"
 
-
-@rem assemble our files
+@rem
     echo Assembling files...
     cd src
     @echo on
@@ -14,7 +14,7 @@
     @echo off
     cd ..
 
-@rem moosh them together into one binary
+@rem
     echo Mooshing binary objects together...
     cd bin
     @echo on
