@@ -42,7 +42,7 @@ parse_input:
         cmp ax, 0
         je .cant_travel
         .can_go_north:
-          mov bx, msg_north
+          mov si, msg_north
           call print_string
           mov [CURRENT_LOCATION], ax
           xor al, al                   ; al = 0 : show location description first, 
@@ -58,7 +58,7 @@ parse_input:
         cmp ax, 0
         je .cant_travel
         .can_go_west:
-          mov bx, msg_west
+          mov si, msg_west
           call print_string
           mov [CURRENT_LOCATION], ax
           xor al, al
@@ -73,7 +73,7 @@ parse_input:
         cmp ax, 0
         je .cant_travel
         .can_go_south:
-          mov bx, msg_south
+          mov si, msg_south
           call print_string
           mov [CURRENT_LOCATION], ax
           xor al, al
@@ -88,7 +88,7 @@ parse_input:
         cmp ax, 0
         je .cant_travel
         .can_go_east:
-          mov bx, msg_east
+          mov si, msg_east
           call print_string
           mov [CURRENT_LOCATION], ax
           xor al, al
@@ -103,11 +103,11 @@ parse_input:
       jmp .end
     ; other commands
   .else:
-    mov bx, msg_pardon
+    mov si, msg_pardon
     call print_string
     jmp .end
   .cant_travel:
-    mov bx, msg_cant_travel
+    mov si, msg_cant_travel
     call print_string
     mov al, 1
   .end:
@@ -119,8 +119,10 @@ enter_location:
     pusha
     mov ax, [CURRENT_LOCATION] 
     add ax, DESC
-    mov bx, ax
+    push si
+    mov si, ax
     call print_string
+    pop si
     popa
     ret
 
@@ -158,4 +160,4 @@ INPUT_BUFFER:
 %include "map.asm"
 
 
-times 4096 -( $ - $$ ) db 0            ; pad out to 4k
+times 4096 - ($ - $$) db 0             ; pad out to 4k
