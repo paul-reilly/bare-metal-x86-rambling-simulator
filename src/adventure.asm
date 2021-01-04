@@ -1,8 +1,6 @@
 
 [org 0x7f00]
 
-DESC equ 8
-
 adventure:
   pusha
   mov ax, 0x0002                     ; set gfx mode/clear the screen
@@ -31,6 +29,13 @@ next_input:
   popa
 
 
+NORTH_OFFS equ 0                     ; north/south/east/west messages and directions (in our map) are
+SOUTH_OFFS equ 2                     ; stored at these offsets to the base addresses
+EAST_OFFS  equ 4                     ;
+WEST_OFFS  equ 6                     ;
+DESC_OFFS  equ 8
+
+
 parse_input:
   push bx
   mov al, [INPUT_BUFFER]             ; get first char
@@ -38,63 +43,30 @@ parse_input:
     cmp al, 'n'
     jne .else_if_west
     .is_north:
-      mov bx, [CURRENT_LOCATION]
-      add bx, 0
-      mov ax, [bx]
-      cmp ax, 0
-      je .cant_travel
-      .can_go_north:
-        mov si, msg_north
-        call print_string
-        mov [CURRENT_LOCATION], ax
-        xor al, al                   ; al = 0 : show location description first, 
-                                     ; al = 1 : just get input
-        jmp .end
+      mov ax, NORTH_OFFS
+      call move
+      jmp .end
   .else_if_west:
     cmp al, 'w'
     jne .else_if_south
     .is_west:
-      mov bx, [CURRENT_LOCATION]
-      add bx, 6                      ; offset for possible west destination in location data
-      mov ax, [bx]
-      cmp ax, 0
-      je .cant_travel
-      .can_go_west:
-        mov si, msg_west
-        call print_string
-        mov [CURRENT_LOCATION], ax
-        xor al, al
-        jmp .end
+      mov ax, WEST_OFFS
+      call move
+      jmp .end
   .else_if_south:
     cmp al, 's'
     jne .else_if_east
-      .is_south:
-        mov bx, [CURRENT_LOCATION]
-        add bx, 2
-        mov ax, [bx]
-        cmp ax, 0
-        je .cant_travel
-        .can_go_south:
-          mov si, msg_south
-          call print_string
-          mov [CURRENT_LOCATION], ax
-          xor al, al
-          jmp .end
+    .is_south:
+      mov ax, SOUTH_OFFS
+      call move
+      jmp .end
   .else_if_east:
     cmp al, 'e'
     jne .else_if_inventory  
     .is_east:
-      mov bx, [CURRENT_LOCATION]
-      add bx, 4
-      mov ax, [bx]
-      cmp ax, 0
-      je .cant_travel
-      .can_go_east:
-        mov si, msg_east
-        call print_string
-        mov [CURRENT_LOCATION], ax
-        xor al, al
-        jmp .end
+      mov ax, EAST_OFFS
+      call move
+      jmp .end
   .else_if_inventory:
     cmp al, 'i'
     mov al, 1
@@ -103,8 +75,7 @@ parse_input:
       mov bx, msg_empty
       call print_string
       jmp .end
-    ; other commands
-  .else:
+  .else:                             ; other commands
     mov si, msg_pardon
     call print_string
     jmp .end
@@ -120,7 +91,7 @@ parse_input:
 enter_location:
   pusha
   mov ax, [CURRENT_LOCATION] 
-  add ax, DESC
+  add ax, DESC_OFFS
   push si
   mov si, ax
   call print_string
@@ -129,15 +100,43 @@ enter_location:
   ret
 
 
+;; process north = 0, south = 2 etc direction
+; in : ax = direction
+; out: 
+move:
+  mov cx, ax
+  mov bx, [CURRENT_LOCATION]
+  add bx, ax
+  mov ax, [bx]
+  cmp ax, 0
+  je .cant_travel
+  .can_travel:
+    mov bx, message_ptrs
+    add bx, cx
+    mov si, [bx]
+    call print_string
+    mov [CURRENT_LOCATION], ax
+    xor al, al                       ; al = 0 : show location description first, 
+                                     ; al = 1 : just get input
+    ret
+  .cant_travel:
+    mov si, msg_cant_travel
+    call print_string
+    mov al, 1
+  ret
+
+
 ; global vars
 CURRENT_LOCATION:
   dw 0
 
-MSGS_DIRECTIONS:
-  dw msg_north
-  dw msg_south
-  dw msg_east
-  dw msg_west
+
+message_ptrs:
+  msg_north_ptr dw msg_north
+  msg_south_ptr dw msg_south
+  msg_east_ptr  dw msg_east
+  msg_west_ptr  dw msg_west
+
 
 msg_north:
   db 'Somewhat unwisely, you travel north...', 10, 13, 0
