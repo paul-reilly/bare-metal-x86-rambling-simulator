@@ -10,7 +10,6 @@
     @echo on
     nasm boot_sector.asm -f bin -o ../bin/boot_sector.bin
     nasm adventure.asm -f bin -o ../bin/adventure.bin
-    nasm boot_pm.asm -f bin -o ../bin/image.bin
     @echo off
     cd ..
 
